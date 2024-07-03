@@ -11,97 +11,19 @@
  */
 
 module.exports = {
-  pathPrefix: process.env.PATH_PREFIX || '/workflow-planning-api/',
+  pathPrefix: process.env.PATH_PREFIX || '/wf-planning/',
   siteMetadata: {
-    versions: [
-      {
-        title: 'v2.0',
-        selected: true
-      },
-      {
-        title: 'v1.4',
-        path: 'https://github.com/AdobeDocs/dev-site'
-      }
-    ],
     pages: [
       {
-        title: 'Cat Analytics',
+        title: 'WF Planning API Overview',
         path: '/'
       },
       {
-        title: 'Guides',
-        path: '/guides/'
-      },
-      {
-        title: 'API Reference',
+        title: 'API',
         menu: [
           {
-            title: 'Cat Reference v2.0',
-            description: 'Cat Reporting API',
-            path: '/api/index.md'
-          },
-          {
-            title: 'Cat Reference v1.4',
-            description: 'Cat API Spec',
-            path: '/api/1.4.md'
-          }
-        ]
-      },
-      {
-        title: 'Support',
-        path: '/support/'
-      }
-    ],
-    subPages: [
-      {
-        title: 'Get Started',
-        path: '/guides/',
-        pages: [
-          {
-            title: 'Dummy an OAuth Client',
-            path: '/guides/dummy_oauth_client/'
-          },
-          {
-            title: 'Dummy OAuth using POSTMAN',
-            path: '/guides/dummy_using_postman/'
-          }
-        ]
-      },
-      {
-        title: 'Cat Metrics API',
-        path: '/guides/dummy_metrics_api/'
-      },
-      {
-        title: 'Migrating',
-        path: '/guides/migrating/'
-      },
-      {
-        title: 'Overview',
-        path: '/support/',
-        header: true,
-        pages: [
-          {
-            title: 'Help',
-            path: '/support/'
-          },
-          {
-            title: 'FAQ',
-            path: '/support/FAQ/'
-          },
-          {
-            title: 'How to contribute',
-            path: '/support/contribute/'
-          }
-        ]
-      },
-      {
-        title: 'Community',
-        path: '/support/community/',
-        header: true,
-        pages: [
-          {
-            title: 'Information',
-            path: '/support/community/'
+            title: 'V1',
+            path: '/api/v1.md'
           }
         ]
       }

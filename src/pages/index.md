@@ -1,21 +1,19 @@
 ---
-title: Planning API Documentation
-description: A guide to using Planning APIs
+title: Workfront Planning API Documentation
+description: A guide to using WF Planning APIs
 ---
 
 <Hero slots="heading, text"/>
 
-# Planning API
+# Workfront Planning API
 
-The Adobe Planning APIs allow you to directly call Adobe's servers to perform actions on your Planning data.
+The Adobe Workfront Planning API provides a REST-ful architecture to simplify integrations with Planning, utilizing HTTP methods for operations.
 
 ## Overview
 
-This documentation provides instructions for Planning APIs.
+The Adobe Workfront Planning API aims to facilitate integration with the Planning feature by leveraging a REST-ful design over HTTP. It is designed for users familiar with REST and JSON responses, and it operates by manipulating objects via their unique URIs using standard HTTP methods.
 
-Planning APIs include REST, SOAP, JavaScript, and User Management APIs, plus code for working with mobile devices and email templates.
-
-The REST API allows for remote execution of many of the system's capabilities. From creating programs to bulk lead import, there are a large number of options that allow fine-grained control of a Planning instance.
+More details on the API can be found in the [References Adobe Workfront Planning API Basics](https://experienceleague.adobe.com/en/docs/workfront/using/adobe-workfront-planning/adobe-workfront-planning-general-information/planning-api-basics).
 
 ## Discover
 
@@ -23,14 +21,8 @@ The REST API allows for remote execution of many of the system's capabilities. F
 
 ### Get Started
 
-PLearn about Planning.
-
-<DiscoverBlock slots="heading, link, text"/>
-
-### Guides
+Familiarize yourself with the basics of the Workfront Planning API, including how to make HTTP requests and utilize the various methods for CRUD operations.
 
 ### API References
-
-## Resources
-
-## Contributing
+Detailed documentation on the Workfront Planning API methods, parameters, and responses can be found below:
+ - **[V1](/api/v1/)**

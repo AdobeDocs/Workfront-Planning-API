@@ -182,13 +182,130 @@
       }
     },
     "/v1/records/search": {
+      "get": {
+        "tags": [
+          "Records"
+        ],
+        "summary": "Search Records by field values",
+        "description": "Search for records based on specific field values.",
+        "operationId": "searchRecordsGet",
+        "parameters": [
+          {
+            "name": "recordTypeId",
+            "in": "query",
+            "description": "Id of the record type",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "recordTypeAlias",
+            "in": "query",
+            "description": "Alias of the record type",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "aliased",
+            "in": "query",
+            "description": "Flag to include alias support",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "filters",
+            "in": "query",
+            "description": "Filters",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "groupingFieldIds",
+            "in": "query",
+            "description": "Grouping field ids",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "Offset",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Limit",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 500
+            }
+          },
+          {
+            "name": "rowOrderViewId",
+            "in": "query",
+            "description": "Row order view id",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "attributes",
+            "in": "query",
+            "description": "List of attributes to be included in the response",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "default": [
+                "*"
+              ]
+            },
+            "example": "ALL"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupedRecordsDto"
+                }
+              }
+            }
+          }
+        }
+      },
       "post": {
         "tags": [
           "Records"
         ],
         "summary": "Search Records by field values",
         "description": "Search for records based on specific field values.",
-        "operationId": "searchRecords",
+        "operationId": "searchRecordsPost",
         "parameters": [
           {
             "name": "recordTypeAlias",

@@ -569,7 +569,8 @@
             "type": "integer",
             "format": "int32"
           }
-        }
+        },
+        "readOnly": true
       },
       "RecordDto": {
         "type": "object",
@@ -608,7 +609,8 @@
             "$ref": "#/components/schemas/RecordExternalOptions"
           },
           "thumbnailUrl": {
-            "type": "string"
+            "type": "string",
+            "readOnly": true
           },
           "coverImage": {
             "$ref": "#/components/schemas/CoverImage"

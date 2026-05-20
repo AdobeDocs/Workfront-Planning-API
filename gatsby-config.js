@@ -24,6 +24,10 @@ module.exports = {
           {
             title: 'V1',
             path: '/api/v1.md'
+          },
+          {
+            title: 'V2',
+            path: '/api/v2.md'
           }
         ]
       }

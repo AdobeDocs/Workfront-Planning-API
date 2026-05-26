@@ -11,11 +11,11 @@
  */
 
 module.exports = {
-  pathPrefix: process.env.PATH_PREFIX || '/wf-planning/',
+  pathPrefix: process.env.PATH_PREFIX || '/workfront-planning/',
   siteMetadata: {
     pages: [
       {
-        title: 'WF Planning API Overview',
+        title: 'Workfront Planning API Overview',
         path: '/'
       },
       {

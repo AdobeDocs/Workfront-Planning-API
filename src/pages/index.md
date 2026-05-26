@@ -1,6 +1,6 @@
 ---
 title: Workfront Planning API Documentation
-description: A guide to using WF Planning APIs
+description: A guide to using Workfront Planning APIs
 ---
 
 <Hero slots="heading, text"/>
@@ -49,7 +49,7 @@ V1 was limited to reading workspaces and record types, with CRUD only for record
 | Records      | `GET`, `POST`, `PUT`, `DELETE` | `GET`, `POST`, `PUT`, `PATCH`, `DELETE` |
 | Views        | Not available            | `GET`, `POST`, `PUT`, `PATCH`, `DELETE` |
 
-This means you can now build integrations that provision workspaces, scaffold record types and fields, and manage records entirely through the API — without any manual setup in the UI.
+This means you can now build integrations that create and manage workspaces, record types, fields, records and views entirely through the API.
 
 #### Partial updates with PATCH
 
@@ -177,7 +177,7 @@ For developers migrating from V1, the table below covers every breaking change a
 | `customerId` / `imsOrgId` | Present in responses                    | No longer returned in responses                             | Response parsing update |
 | Bulk operations       | Not available                               | `/records/bulk` endpoints                                   | New capability          |
 | Permissions API       | Not available                               | `/v2/permissions/`                                          | New capability          |
-| Permissions in response | Embedded in resource DTO                  | Removed — use Permissions API                               | Response parsing update |
+| Permissions in response | Embedded in resource response             | Removed — use Permissions API                               | Response parsing update |
 
 ### Migration guide — updating from V1 to V2
 
@@ -235,9 +235,10 @@ Bulk endpoints return `201` when every row succeeds and `207 Multi-Status` when 
 
 #### 5. Update pagination
 
+Workspaces, record types, fields, and views use cursor-based pagination. Records use page number and page size parameters.
 Remove `offset`/`limit` from the request body. Move to query parameters and update response parsing.
 
-Record search:
+Records:
 
 ```
 Before (body):     { "offset": 0, "limit": 50 }
@@ -251,7 +252,7 @@ After  (response): {
                    }
 ```
 
-Workspace and record type listings (cursor-based):
+Workspaces, record types, fields and views (cursor-based):
 
 ```
 GET /v2/workspaces?limit=20&cursor={nextCursor}
@@ -326,29 +327,33 @@ After (V2):
 
 Switch on the stable `errorCode` enum (e.g. `VALIDATION_FAILED`, `NOT_FOUND`, `CONFLICT`, `FORBIDDEN`, `UNAUTHORIZED`, `INTERNAL_ERROR`) rather than the HTTP status or `title`. Always capture `requestId` in client logs — support tickets are resolved much faster with it.
 
-#### 8. Remove permissions from resource response parsing
+#### 8. Use Permissions API to check access
 
-V2 no longer includes permission level in resource DTOs. Switch to the Permissions API for any integration that reads the permission field from workspace or record type responses.
+V2 no longer includes permission level in resource responses. Switch to the Permissions API for any integration that reads the permission field from workspace or record type responses.
 
 ```
 GET /v2/permissions/{resourceType}/{resourceId}
 ```
 
-#### 9. Update response field parsing
+#### 9. Update response parsing for system fields
 
-`customerId` and `imsOrgId` are no longer returned in responses — remove any client parsing for them. Update `createdBy` and `updatedBy` parsing from a plain string to an object.
+V1 included the `customerId` and `imsOrgId` in both headers and request/response bodies. V2 request/response bodies no longer contain that information and only rely on headers.
 
+Also, `createdBy` and `updatedBy` fields are returned as objects instead of a plain string.
 ```
 Before: "createdBy": "user123"
 After:  "createdBy": { "id": "user123", "name": "Jane Doe" }
 ```
 
-#### 10. Update field projection
+#### 10. Update field parameters
 
+In V2, filtering the response by a specific field is only supported for records. All other resources always return their full information.
+
+For records, replace `?attributes=` with `?fieldIds=` for field IDs or `?fieldAliases=` for field aliases. System fields such as Created By and Last Updated By are always included in the response regardless of what you specify.
 Replace the `?attributes=` query parameter with `?fieldIds=` or `?fieldAliases=`.
 
 ```
-Before: /v1/records/search?attributes=data,createdBy
+Before: /v1/records/search?attributes=F123,F456,createdBy
 After:  /v2/record-types/{id}/records/search?fieldIds=F123,F456
 ```
 

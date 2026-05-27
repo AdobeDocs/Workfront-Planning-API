@@ -75,12 +75,30 @@ V2 introduces dedicated bulk endpoints for records, allowing you to create, upda
 
 Bulk endpoints return `201 Created` when every row succeeds and `207 Multi-Status` for partial success — inspect the per-row results envelope to identify which records failed and why.
 
-#### Bulk reorder and move
+#### Reorder records
 
-Move or reorder records across positions in a single call:
+Reorder up to 100 records within a record type by placing them immediately after or before an anchor record. Provide exactly one of `putAfterRecordId` or `putBeforeRecordId`. The operation is all‑or‑nothing — on failure no records are reordered.
 
 ```
 POST /v2/record-types/{recordTypeId}/records/move
+```
+
+**Request body — place after an anchor**
+
+```json
+{
+  "recordIds": ["Rc6796aaaa0000000000000001", "Rc6796aaaa0000000000000002"],
+  "putAfterRecordId": "Rc67a1bbbb0000000000000010"
+}
+```
+
+**Request body — place before an anchor**
+
+```json
+{
+  "recordIds": ["Rc6796aaaa0000000000000003"],
+  "putBeforeRecordId": "Rc67a2cccc0000000000000020"
+}
 ```
 
 #### Record thumbnails
@@ -94,23 +112,27 @@ DELETE /v2/records/{id}/thumbnail   → 204 No Content
 
 #### Global record types
 
-List record types that are globally available within a workspace:
+Retrieve the list of available global record types that you can add to a workspace:
 
 ```
 GET /v2/workspaces/{workspaceId}/global-record-types
 ```
 
-#### Detach a dynamic record type
+#### Delete a global record type from a secondary workspace
 
-Detach a dynamic record type from its source so it becomes a standalone record type:
+Use this endpoint to delete a global record type from a secondary workspace. Note that all records created in that workspace will be permanently deleted:
 
 ```
 POST /v2/workspaces/{workspaceId}/record-types/{recordTypeId}/detach
 ```
 
-#### History API
+#### Retrieve record changes history
 
-V2 exposes a dedicated History API for retrieving change history on Planning resources, enabling auditing and timeline integrations.
+Retrieve a cursor‑paginated list of field change events for a specific record. Each entry captures who changed which field, when, and the before/after values along with a snapshot of the field's metadata at that moment.
+
+```
+GET /v2/records/{id}/history
+```
 
 #### Permissions API
 
@@ -133,10 +155,6 @@ For example, the endpoint below will return the list of people who have access t
 ```
 GET /v2/permissions/workspaces/Ws6a0475de4ecced960185e1e1/members
 ```
-
-#### Full OpenAPI 3.x specification
-
-All V2 endpoints, request bodies, response shapes, and filter schemas are fully documented in the live OpenAPI spec — including search filter schemas that were undocumented in V1.
 
 #### Platform limits
 
@@ -192,7 +210,7 @@ Before: https://{customer-domain}/maestro/api/v1/workspaces
 After:  https://{customer-domain}/maestro/api/v2/workspaces
 ```
 
-#### 2. Update record type listing
+#### 2. Update how the list of record types in a workspace is retrieved
 
 Move `workspaceId` from a query parameter to the URL path.
 

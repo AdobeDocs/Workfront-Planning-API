@@ -1,7 +1,7 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "Workfront Planning API",
+    "title": "Workfront Planning API V2",
     "description": "This is Workfront Planning Service API documentation. Workfront Planning Service is responsible for creating and managing new workspace, field, record, record type objects across the Workfront application and Adobe DX infrastructure.",
     "version": "v2"
   },

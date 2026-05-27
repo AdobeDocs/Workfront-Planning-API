@@ -83,7 +83,7 @@ Reorder up to 100 records within a record type by placing them immediately after
 POST /v2/record-types/{recordTypeId}/records/move
 ```
 
-**Request body — place after an anchor**
+Move after a specified record
 
 ```json
 {
@@ -92,7 +92,7 @@ POST /v2/record-types/{recordTypeId}/records/move
 }
 ```
 
-**Request body — place before an anchor**
+Move before a specified record
 
 ```json
 {

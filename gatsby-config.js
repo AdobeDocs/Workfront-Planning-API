@@ -11,7 +11,7 @@
  */
 
 module.exports = {
-  pathPrefix: process.env.PATH_PREFIX || '/workfront-planning/',
+  pathPrefix: process.env.PATH_PREFIX || '/wf-planning/',
   siteMetadata: {
     pages: [
       {

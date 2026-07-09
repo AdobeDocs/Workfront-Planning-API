@@ -27,6 +27,10 @@ Familiarize yourself with the Workfront Planning API: HTTP requests, CRUD operat
  - **[V1](/api/v1/)**
  - **[V2](/api/v2/)**
 
+### Related APIs
+
+ - **[Commenting API](https://developer.adobe.com/workfront-commenting-api/)** — create, read, update, and delete comments, replies, and reactions on Planning records (`objectCode: RECORD`) and other supported Adobe CX objects.
+
 ---
 
 ## V1 vs V2 — What's New

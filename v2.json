@@ -1643,6 +1643,15 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "scopeWorkspaceId",
+            "in": "query",
+            "description": "For global record types, the workspace whose default-permission rule is set when permissionSettings is provided. Defaults to the primary workspace; ignored for regular record types.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "requestBody": {
@@ -1805,6 +1814,15 @@
             "in": "path",
             "description": "ID of the record type to be patched",
             "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "scopeWorkspaceId",
+            "in": "query",
+            "description": "For global record types, the workspace whose default-permission rule is set when permissionSettings is provided. Defaults to the primary workspace; ignored for regular record types.",
+            "required": false,
             "schema": {
               "type": "string"
             }
@@ -4942,7 +4960,9 @@
           },
           "appliedFilters": {
             "type": "array",
-            "items": {}
+            "items": {
+
+            }
           }
         }
       },
@@ -5079,14 +5099,15 @@
             "type": "string",
             "description": "Type of the view (TABLE, TIMELINE, CALENDAR, LIST, GALLERY)",
             "enum": [
-              "TABLE",
-              "TIMELINE",
-              "CALENDAR",
-              "LIST",
-              "GALLERY"
+              "table",
+              "timeline",
+              "calendar",
+              "list",
+              "gallery"
             ],
-            "example": "TABLE",
-            "minLength": 1
+            "example": "table",
+            "minLength": 1,
+            "pattern": "table|timeline|calendar|list|gallery"
           },
           "recordTypeId": {
             "type": "string",
@@ -5228,6 +5249,15 @@
             "type": "boolean",
             "description": "Whether to truncate record content in timeline views",
             "example": false
+          },
+          "timelineLayout": {
+            "type": "string",
+            "description": "Layout for timeline views: 'stacked' or 'swimlane'",
+            "enum": [
+              "stacked",
+              "swimlane"
+            ],
+            "example": "stacked"
           },
           "dynamicFieldMetadata": {
             "$ref": "#/components/schemas/DynamicFieldMetadataDto",
@@ -5402,7 +5432,9 @@
           },
           "data": {
             "type": "object",
-            "additionalProperties": {},
+            "additionalProperties": {
+
+            },
             "description": "Field data for the record as key-value pairs where keys are field IDs",
             "example": {
               "F693ab1c96f11ea3f4175e710": "Campaign Name",
@@ -5463,7 +5495,9 @@
           },
           "data": {
             "type": "object",
-            "additionalProperties": {},
+            "additionalProperties": {
+
+            },
             "description": "Field data for the record as key-value pairs where keys are field IDs",
             "example": {
               "F693ab1c96f11ea3f4175e710": "Campaign Name",
@@ -5505,7 +5539,9 @@
           },
           "details": {
             "type": "object",
-            "additionalProperties": {},
+            "additionalProperties": {
+
+            },
             "description": "Optional structured context for this item failure."
           }
         }
@@ -5640,7 +5676,8 @@
               "member",
               "groupmember",
               "maestro/view",
-              "maestro/dynamic_recordtype"
+              "maestro/dynamic_recordtype",
+              "maestro/field"
             ],
             "example": "redrock/user"
           },
@@ -5650,6 +5687,40 @@
             "example": "U123abc"
           }
         }
+      },
+      "PermissionSubjectDto": {
+        "type": "object",
+        "description": "A subject (user/group/team/role/company) granted explicit edit access in a RESTRICTED rule",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Identifier of the subject",
+            "example": "642f1c0a0e38f35f28c3ccee",
+            "minLength": 1
+          },
+          "type": {
+            "type": "string",
+            "description": "Type of the subject",
+            "enum": [
+              "USER",
+              "GROUP",
+              "TEAM",
+              "ROLE",
+              "COMPANY"
+            ],
+            "example": "USER"
+          },
+          "displayName": {
+            "type": "string",
+            "description": "Display name of the subject, resolved from Redrock at read time",
+            "example": "Jane Doe",
+            "readOnly": true
+          }
+        },
+        "required": [
+          "id",
+          "type"
+        ]
       },
       "RecordTypeDto": {
         "type": "object",
@@ -5730,6 +5801,10 @@
             "description": "ID of an existing global record type to attach to the workspace (used only on create). When provided, the record type is not created but attached as a dynamic usage.",
             "example": "Rt69b14f7e0e38f35f28c3ccee",
             "writeOnly": true
+          },
+          "permissionSettings": {
+            "$ref": "#/components/schemas/RecordTypePermissionSettingsDto",
+            "description": "Default record-level permission rule for this record type. On read, the resolved rule for the current workspace context (defaulted to OPEN when never configured); omitted when the default-record-permissions feature is disabled. On PATCH/PUT, set this to configure the rule — for global record types it applies to the workspace given by the scopeWorkspaceId query param (defaulting to the primary workspace)."
           },
           "externalOptions": {
             "$ref": "#/components/schemas/RecordTypeExternalOptionsDto",
@@ -5825,6 +5900,31 @@
           }
         }
       },
+      "RecordTypePermissionSettingsDto": {
+        "type": "object",
+        "description": "Default record-level permission rule for a record type",
+        "properties": {
+          "mode": {
+            "type": "string",
+            "description": "OPEN (all workspace contributors can edit new records) or RESTRICTED (only the creator + selected subjects can edit; inheritance of edit access disabled)",
+            "enum": [
+              "OPEN",
+              "RESTRICTED"
+            ],
+            "example": "RESTRICTED"
+          },
+          "subjects": {
+            "type": "array",
+            "description": "Subjects with explicit edit access in RESTRICTED mode. Retained across mode toggles so a prior selection is restored when switching back to RESTRICTED.",
+            "items": {
+              "$ref": "#/components/schemas/PermissionSubjectDto"
+            }
+          }
+        },
+        "required": [
+          "mode"
+        ]
+      },
       "FieldAttachmentOptionsDto": {
         "type": "object",
         "description": "Attachment field options",
@@ -5849,7 +5949,10 @@
               "standard",
               "friendly",
               "european",
-              "iso"
+              "iso",
+              "short",
+              "medium",
+              "long"
             ]
           },
           "timeFormat": {
@@ -5879,7 +5982,10 @@
               "standard",
               "friendly",
               "european",
-              "iso"
+              "iso",
+              "short",
+              "medium",
+              "long"
             ]
           },
           "timeFormat": {
@@ -6534,7 +6640,9 @@
           },
           "filters": {
             "type": "object",
-            "additionalProperties": {},
+            "additionalProperties": {
+
+            },
             "description": "Filters for the reference field"
           },
           "lookupFields": {
@@ -6646,6 +6754,10 @@
             "description": "ID of an existing global record type to attach to the workspace (used only on create). When provided, the record type is not created but attached as a dynamic usage.",
             "example": "Rt69b14f7e0e38f35f28c3ccee",
             "writeOnly": true
+          },
+          "permissionSettings": {
+            "$ref": "#/components/schemas/RecordTypePermissionSettingsDto",
+            "description": "Default record-level permission rule for this record type. On read, the resolved rule for the current workspace context (defaulted to OPEN when never configured); omitted when the default-record-permissions feature is disabled. On PATCH/PUT, set this to configure the rule — for global record types it applies to the workspace given by the scopeWorkspaceId query param (defaulting to the primary workspace)."
           }
         },
         "required": [
@@ -6713,6 +6825,9 @@
             "type": "integer",
             "format": "int32"
           },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
+          },
           "first": {
             "type": "boolean"
           },
@@ -6740,9 +6855,6 @@
             "type": "integer",
             "format": "int32"
           },
-          "pageable": {
-            "$ref": "#/components/schemas/PageableObject"
-          },
           "empty": {
             "type": "boolean"
           }
@@ -6751,6 +6863,17 @@
       "PageableObject": {
         "type": "object",
         "properties": {
+          "paged": {
+            "type": "boolean"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
           "offset": {
             "type": "integer",
             "format": "int64"
@@ -6760,17 +6883,6 @@
           },
           "unpaged": {
             "type": "boolean"
-          },
-          "paged": {
-            "type": "boolean"
-          },
-          "pageNumber": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "pageSize": {
-            "type": "integer",
-            "format": "int32"
           }
         }
       },
@@ -6827,13 +6939,13 @@
       "SortObject": {
         "type": "object",
         "properties": {
+          "sorted": {
+            "type": "boolean"
+          },
           "empty": {
             "type": "boolean"
           },
           "unsorted": {
-            "type": "boolean"
-          },
-          "sorted": {
             "type": "boolean"
           }
         }

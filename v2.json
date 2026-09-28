@@ -1,8 +1,9 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "Workfront Planning API Version 2",
-    "description": "This is Workfront Planning Service API documentation. Workfront Planning Service is responsible for creating and managing new workspace, field, record, record type objects across the Workfront application and Adobe DX infrastructure."
+    "title": "Workfront Planning API",
+    "description": "This is WF Planning Service API documentation. WF Planning Service is responsible for creating and managing new workspace, field, record, record type objects across the Workfront application and Adobe DX infrastructure.",
+    "version": "v2"
   },
   "servers": [
     {
@@ -25,7 +26,7 @@
     },
     {
       "name": "Fields",
-      "description": "Field management. Per-record-type quotas: max 500 fields total; max 20 PARAGRAPH (long-text) fields; max 20 FORMULA fields; max 30 REFERENCE fields. Field display names must be unique within a record type and capped at 256 characters. Formula expressions: max 50,000 characters; lookup depth: max 5."
+      "description": "Field management. Per-record-type quotas: max 500 fields total; max 20 long-text fields; max 20 formula fields; max 30 reference fields. Field display names must be unique within a record type and capped at 256 characters. Formula expressions: max 50,000 characters; lookup depth: max 5."
     },
     {
       "name": "Views",
@@ -37,7 +38,7 @@
     },
     {
       "name": "Limits and Quotas",
-      "description": "Public API V2 limits and quotas:\n\n- Workspaces per tenant: 100,000\n- Record types per workspace: 100\n- Records per record type: 25,000\n- Records per bulk request: 100\n- Fields per record type: 500\n- PARAGRAPH (long-text) fields per record type: 20\n- FORMULA fields per record type: 20\n- REFERENCE fields per record type: 30\n- Connections per reference field: 500\n- Connections per hierarchy field: 10\n- Personal views per record type: 100\n- Lookup depth: 5\n- Hierarchy depth: 4\n- Hierarchy count per workspace: 5\n- Formula expression length: 50,000 characters\n- Display name length: 256 characters\n\nExceeding any of these limits returns an HTTP 403 with a specific `errorCode` (e.g. `RECORD_TYPE_LIMIT_EXCEEDED`, `FIELD_LIMIT_EXCEEDED`, `VIEW_LIMIT_EXCEEDED`)."
+      "description": "Public API V2 limits and quotas:\n\n- Workspaces per tenant: 100,000\n- Record types per workspace: 100\n- Records per record type: 25,000\n- Records per bulk request: 100\n- Fields per record type: 500\n- long-text fields per record type: 20\n- formula fields per record type: 20\n- reference fields per record type: 30\n- Connections per reference field: 500\n- Connections per hierarchy field: 10\n- Personal views per record type: 100\n- Lookup depth: 5\n- Hierarchy depth: 4\n- Hierarchy count per workspace: 5\n- Formula expression length: 50,000 characters\n- Display name length: 256 characters\n\nExceeding any of these limits returns an HTTP 403 with a specific `errorCode` (e.g. `RECORD_TYPE_LIMIT_EXCEEDED`, `FIELD_LIMIT_EXCEEDED`, `VIEW_LIMIT_EXCEEDED`)."
     }
   ],
   "paths": {
@@ -532,7 +533,7 @@
             }
           },
           "409": {
-            "description": "Conflict (write conflict, retry)",
+            "description": "Conflict (write conflict — retry; or the view references a field you cannot view — do not retry)",
             "content": {
               "application/json": {
                 "schema": {
@@ -697,7 +698,7 @@
             }
           },
           "409": {
-            "description": "Conflict (write conflict, retry)",
+            "description": "Conflict (write conflict — retry; or the view references a field you cannot view — do not retry)",
             "content": {
               "application/json": {
                 "schema": {
@@ -735,6 +736,16 @@
             "required": true,
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "aliased",
+            "in": "query",
+            "description": "Flag to include alias support in response (field keys will be aliases instead of IDs)",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
             }
           }
         ],
@@ -1989,7 +2000,7 @@
           "Fields"
         ],
         "summary": "Update Field",
-        "description": "Update an existing field using PUT (full replacement). All fields not provided in the request will be set to null.",
+        "description": "Update an existing field using PUT (full replacement). All fields not provided in the request will be set to null. The type-specific options object must meet the same requiredness bar as on create (see Create Field), even for fields that were persisted without one previously.",
         "operationId": "updateField",
         "parameters": [
           {
@@ -2024,7 +2035,7 @@
             }
           },
           "400": {
-            "description": "Bad Request (validation failure)",
+            "description": "Bad Request (validation failure; FIELD_REQUIRED_VALUE_MISSING when a required type-specific option is missing, FIELD_VALUE_NOT_UNIQUE when select option displayNames/names are duplicated)",
             "content": {
               "application/json": {
                 "schema": {
@@ -2154,7 +2165,7 @@
           "Fields"
         ],
         "summary": "Patch Field",
-        "description": "Partially update a field using PATCH (merge-patch semantics). Only provided fields will be updated; omitted fields remain unchanged.",
+        "description": "Partially update a field using PATCH (merge-patch semantics). Only provided fields will be updated; omitted fields remain unchanged. Unlike create/PUT, PATCH does not require the type-specific options object to be (re-)supplied; an already-valid persisted options object is left as-is when omitted from the request.",
         "operationId": "patchField",
         "parameters": [
           {
@@ -3019,6 +3030,16 @@
               }
             }
           },
+          "409": {
+            "description": "Conflict (view references a field you cannot view)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/V2ProblemDetail"
+                }
+              }
+            }
+          },
           "500": {
             "description": "Internal Server Error",
             "content": {
@@ -3825,7 +3846,7 @@
           "Fields"
         ],
         "summary": "Create Field",
-        "description": "Create a new field in a record type. Subject to limits: max 500 fields per record type, max 20 long-text fields, max 20 formula fields, max 30 reference fields per record type.",
+        "description": "Create a new field in a record type. Subject to limits: max 500 fields per record type, max 20 long-text fields, max 20 formula fields, max 30 reference fields per record type. The type-specific options object is required and validated against the field's type: dateOptions.dateFormat for date; numberOptions for number/percentage/currency (numberOptions.currency is additionally required for currency); userOptions.multipleUsersAllowed for user; and a non-empty options list with unique, non-blank displayNames for single-select/multi-select. The lookup and document types are not directly creatable and are rejected with 400 INVALID_DATA.",
         "operationId": "createField",
         "parameters": [
           {
@@ -3860,7 +3881,7 @@
             }
           },
           "400": {
-            "description": "Bad Request (validation failure)",
+            "description": "Bad Request (validation failure; FIELD_REQUIRED_VALUE_MISSING when a required type-specific option is missing, FIELD_VALUE_NOT_UNIQUE when select option displayNames/names are duplicated)",
             "content": {
               "application/json": {
                 "schema": {
@@ -4173,90 +4194,7 @@
         }
       }
     },
-    "/v2/permissions/{resourceType}/{resourceId}/members": {
-      "get": {
-        "tags": [
-          "Permissions"
-        ],
-        "summary": "Get all members and their roles for a resource",
-        "description": "Lists all subjects (users, groups, teams) that have an explicit sharing relation on the resource. Requires MANAGE permission.",
-        "operationId": "getMembers",
-        "parameters": [
-          {
-            "name": "resourceType",
-            "in": "path",
-            "description": "Type of resource (workspaces, record-types, records, views)",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "resourceId",
-            "in": "path",
-            "description": "ID of the resource",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/MemberPermissionDto"
-                  }
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/V2ProblemDetail"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/V2ProblemDetail"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/V2ProblemDetail"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal Server Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/V2ProblemDetail"
-                }
-              }
-            }
-          }
-        }
-      },
+    "/v2/permissions/{resourceType}/{resourceId}/members/bulk": {
       "patch": {
         "tags": [
           "Permissions"
@@ -4268,7 +4206,7 @@
           {
             "name": "resourceType",
             "in": "path",
-            "description": "Type of resource (workspaces, record-types, records, views)",
+            "description": "Type of resource (workspaces, record-types, records, views, fields)",
             "required": true,
             "schema": {
               "type": "string"
@@ -4279,6 +4217,24 @@
             "in": "path",
             "description": "ID of the resource",
             "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "recordTypeId",
+            "in": "query",
+            "description": "The record type the field belongs to. Required for fields, ignored otherwise.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "scopeWorkspaceId",
+            "in": "query",
+            "description": "The workspace the caller is operating from. For record-types: when the record-type is a global record-type genuinely attached dynamically to this workspace, every operation in the request (grants/revokes, inheritance, wildcard) is resolved against that dynamic-use context instead of the record-type's own (home) context. For records and views: has no effect on how the request is applied — grants/revokes/wildcard always act on the resource's own single set of members. The value is validated against the resource's real dynamic-use context (via its parent global record-type), and the request fails with 400 if it doesn't correspond to a genuine dynamic attachment. Ignored for workspace resources.",
+            "required": false,
             "schema": {
               "type": "string"
             }
@@ -4436,6 +4392,79 @@
         }
       }
     },
+    "/v2/views/{id}/restriction": {
+      "get": {
+        "tags": [
+          "Views"
+        ],
+        "summary": "Get view field-restriction status",
+        "description": "Manager-only: reports whether the view is restricted (or has restricted content) for anyone, not just the caller.",
+        "operationId": "getViewRestriction",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID of the view to check",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ViewRestrictionDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/V2ProblemDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/V2ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/V2ProblemDetail"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/V2ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v2/records/{id}/history": {
       "get": {
         "tags": [
@@ -4541,6 +4570,176 @@
         }
       }
     },
+    "/v2/record-types/{recordTypeId}/records/export": {
+      "get": {
+        "tags": [
+          "Records"
+        ],
+        "summary": "Export Records",
+        "description": "Stream ALL records the user can VIEW for a record type as a CSV or Excel (.xlsx) file. Columns and their order come from the given view (viewId); otherwise from fieldIds, otherwise all fields. Supports the same filter/grouping parameters as search, plus a single scopeWorkspaceId to scope global record types, so the export matches the on-screen table. The response is streamed to bound memory usage.",
+        "operationId": "exportRecords",
+        "parameters": [
+          {
+            "name": "recordTypeId",
+            "in": "path",
+            "description": "ID of the record type",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "description": "Export format: CSV or EXCEL",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "viewId",
+            "in": "query",
+            "description": "ID of the table view whose visible columns/order to export",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "recordTypeAlias",
+            "in": "query",
+            "description": "Alias of the record type",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter",
+            "in": "query",
+            "description": "JSON filter using the composite filter pattern (same as search)",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "groupingFieldIds",
+            "in": "query",
+            "description": "List of field IDs to group results by",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "scopeWorkspaceId",
+            "in": "query",
+            "description": "ID of the workspace to scope the search to (for global record types); the workspace-link field is resolved automatically from the record type",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "fieldIds",
+            "in": "query",
+            "description": "List of field IDs to include as columns (fallback when no viewId)",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "default": [
+                "*"
+              ],
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "fieldAliases",
+            "in": "query",
+            "description": "List of field aliases to include as columns (fallback when no viewId)",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "default": [
+                "*"
+              ],
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StreamingResponseBody"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request (invalid filter / too many records)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/V2ProblemDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/V2ProblemDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/V2ProblemDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Record Type Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/V2ProblemDetail"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/V2ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v2/permissions/{resourceType}/{resourceId}": {
       "get": {
         "tags": [
@@ -4553,7 +4752,7 @@
           {
             "name": "resourceType",
             "in": "path",
-            "description": "Type of resource (workspaces, record-types, records, views)",
+            "description": "Type of resource (workspaces, record-types, records, views, fields)",
             "required": true,
             "schema": {
               "type": "string"
@@ -4564,6 +4763,24 @@
             "in": "path",
             "description": "ID of the resource",
             "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "recordTypeId",
+            "in": "query",
+            "description": "The record type the field belongs to. Required for fields, ignored otherwise.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "scopeWorkspaceId",
+            "in": "query",
+            "description": "The workspace the caller is operating from. For record-types: when the record-type is a global record-type genuinely attached dynamically to this workspace, the effective permissions returned reflect that dynamic-use context instead of the record-type's own (home) context. For records and views: has no effect on the result — the value is validated against the resource's real dynamic-use context (via its parent global record-type), and the request fails with 400 if it doesn't correspond to a genuine dynamic attachment. Ignored for workspace resources.",
+            "required": false,
             "schema": {
               "type": "string"
             }
@@ -4613,19 +4830,19 @@
         }
       }
     },
-    "/v2/permissions/{resourceType}/{resourceId}/inheritance": {
+    "/v2/permissions/{resourceType}/{resourceId}/members": {
       "get": {
         "tags": [
           "Permissions"
         ],
-        "summary": "Get inheritance setting for a record-type",
-        "description": "Returns whether workspace members inherit their workspace-level access on the record type. Only valid for record-types.",
-        "operationId": "getInheritance",
+        "summary": "Get all members and sharing settings for a resource",
+        "description": "Lists all subjects (users, groups, teams) that have an explicit sharing relation on the resource, together with its wildcard access mode (records only) and inheritance setting (record-types only). Requires MANAGE permission.",
+        "operationId": "getMembers",
         "parameters": [
           {
             "name": "resourceType",
             "in": "path",
-            "description": "Type of resource (must be record-types)",
+            "description": "Type of resource (workspaces, record-types, records, views, fields)",
             "required": true,
             "schema": {
               "type": "string"
@@ -4639,6 +4856,24 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "recordTypeId",
+            "in": "query",
+            "description": "The record type the field belongs to. Required for fields, ignored otherwise.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "scopeWorkspaceId",
+            "in": "query",
+            "description": "The workspace the caller is operating from. For record-types: when the record-type is a global record-type genuinely attached dynamically to this workspace, the members and settings returned are those of that dynamic-use context instead of the record-type's own (home) context. For records and views: has no effect on the result — the value is validated against the resource's real dynamic-use context (via its parent global record-type), and the request fails with 400 if it doesn't correspond to a genuine dynamic attachment. Ignored for workspace resources.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -4647,7 +4882,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/InheritanceDto"
+                  "$ref": "#/components/schemas/MemberResponse"
                 }
               }
             }
@@ -4658,6 +4893,194 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/V2ProblemDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/V2ProblemDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/V2ProblemDetail"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/V2ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/permissions/{resourceType}/{resourceId}/inheritance": {
+      "get": {
+        "tags": [
+          "Permissions"
+        ],
+        "summary": "Get inheritance members for a resource",
+        "description": "Returns the members that inherit access onto the resource. For record-types: the members of its workspace. For records: the union of its parent record-type's own members and its workspace's members. Views and workspaces don't inherit through this chain and always return an empty list. Whether that inheritance is currently downgraded to view-only is reported separately, as inheritViewOnly on GET .../members. Requires MANAGE permission.",
+        "operationId": "getInheritance",
+        "parameters": [
+          {
+            "name": "resourceType",
+            "in": "path",
+            "description": "Type of resource (workspaces, record-types, records, views, fields)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "resourceId",
+            "in": "path",
+            "description": "ID of the resource",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "recordTypeId",
+            "in": "query",
+            "description": "The record type the field belongs to. Required for fields, ignored otherwise.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "scopeWorkspaceId",
+            "in": "query",
+            "description": "The workspace the caller is operating from. For record-types: when the record-type is a global record-type genuinely attached dynamically to this workspace, the members returned reflect that dynamic-use context instead of the record-type's own (home) context. For records: selects whether the dynamic-use workspace's or the home workspace's members are returned as part of the inherited set — the value is validated against the resource's real dynamic-use context (via its parent global record-type), and the request fails with 400 if it doesn't correspond to a genuine dynamic attachment. Ignored for views and workspaces.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MemberPermissionDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/V2ProblemDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/V2ProblemDetail"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/V2ProblemDetail"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/V2ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/fields/{name}/record-types": {
+      "get": {
+        "tags": [
+          "Fields"
+        ],
+        "summary": "Get Record Types using a Field",
+        "description": "Retrieve a cursor-paginated list of record types that have a field whose linked field (e.g. a reference or lookup field's linked field) has the given alias. Only record types the caller has VIEW access to are included. Returns an empty list (not an error) both when no field has that alias and when the caller cannot view any matching field.",
+        "operationId": "getRecordTypesUsingField",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "description": "alias of the field",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "description": "Cursor from the previous page response for fetching the next page",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Maximum number of items to return per page (1-100, default 20)",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CursorResponseRecordTypeDto"
                 }
               }
             }
@@ -4925,7 +5348,10 @@
               "SUM",
               "AVG",
               "MIN",
-              "MAX"
+              "MAX",
+              "EMPTY_COUNT",
+              "NOT_EMPTY_COUNT",
+              "FILLED_COUNT"
             ]
           }
         }
@@ -4960,11 +5386,118 @@
           },
           "appliedFilters": {
             "type": "array",
-            "items": {
-
-            }
+            "items": {}
           }
         }
+      },
+      "FilterCondition": {
+        "type": "string",
+        "description": "Supported filter conditions for record search",
+        "enum": [
+          "CONTAINS",
+          "DOES_NOT_CONTAIN",
+          "IS",
+          "IS_NOT",
+          "IS_EMPTY",
+          "IS_NOT_EMPTY",
+          "GREATER_THAN",
+          "GREATER_THAN_OR_EQUAL",
+          "LESS_THAN",
+          "LESS_THAN_OR_EQUAL",
+          "IS_AFTER",
+          "IS_BEFORE",
+          "IS_BETWEEN",
+          "IS_NOT_BETWEEN",
+          "IS_ANY_OF",
+          "IS_NONE_OF",
+          "HAS_ANY_OF",
+          "HAS_ALL_OF",
+          "HAS_NONE_OF",
+          "IS_EXACTLY"
+        ]
+      },
+      "FilterConditionDto": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/FilterNodeDto"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "fieldId": {
+                "type": "string",
+                "description": "ID or alias of the field to filter on",
+                "example": "F693ab1c96f11ea3f4175e710",
+                "minLength": 1
+              },
+              "condition": {
+                "$ref": "#/components/schemas/FilterCondition",
+                "description": "Filter condition to apply"
+              },
+              "value": {
+                "description": "Value to compare against. Omit for unary conditions (IS_EMPTY, IS_NOT_EMPTY). Use an array for range conditions (IS_BETWEEN) or multi-value conditions (IS_ANY_OF). For People fields (USER, CREATED_BY, UPDATED_BY, APPROVED_BY), by default plain string values are interpreted as Adobe IMS user IDs when the customer is IMS-migrated; otherwise they are interpreted as Workfront user IDs. To explicitly set the ID type and avoid ambiguity, pass a typed object such as {\"id\":\"63e3b13000078c1795146248182d15dc\",\"idType\":\"WF\"} (use \"idType\":\"IMS\" for Adobe IMS IDs).",
+                "example": "Active"
+              },
+              "matchExternalId": {
+                "type": "boolean",
+                "description": "When true, values for REFERENCE fields are treated as external connection IDs and resolved to internal record IDs before the search executes. Only valid for external REFERENCE fields (isExternal=true)."
+              }
+            }
+          }
+        ],
+        "description": "A leaf filter condition applied to a single field",
+        "required": [
+          "condition",
+          "fieldId"
+        ]
+      },
+      "FilterGroupDto": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/FilterNodeDto"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "operator": {
+                "$ref": "#/components/schemas/FilterOperator",
+                "description": "Logical operator to combine conditions"
+              },
+              "conditions": {
+                "type": "array",
+                "description": "List of filter nodes: leaf conditions or nested groups",
+                "items": {
+                  "$ref": "#/components/schemas/FilterNodeDto"
+                },
+                "minItems": 1
+              }
+            }
+          }
+        ],
+        "description": "A group of filter conditions combined with a logical operator (AND/OR). Supports recursive nesting for complex filter logic.",
+        "required": [
+          "conditions",
+          "operator"
+        ]
+      },
+      "FilterNodeDto": {
+        "description": "A node in the filter tree: either a leaf condition or a nested group",
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/FilterConditionDto"
+          },
+          {
+            "$ref": "#/components/schemas/FilterGroupDto"
+          }
+        ]
+      },
+      "FilterOperator": {
+        "type": "string",
+        "description": "Logical operator for combining filter conditions",
+        "enum": [
+          "AND",
+          "OR"
+        ]
       },
       "GroupColoring": {
         "type": "object",
@@ -5097,7 +5630,7 @@
           },
           "type": {
             "type": "string",
-            "description": "Type of the view (TABLE, TIMELINE, CALENDAR, LIST, GALLERY)",
+            "description": "Type of the view. Must be the exact canonical lowercase value; no other casing is accepted, consistent with the internal API.",
             "enum": [
               "table",
               "timeline",
@@ -5156,6 +5689,15 @@
             "description": "Whether this view is restricted (limited access for global/dynamic record types)",
             "example": false,
             "readOnly": true
+          },
+          "restrictionStatus": {
+            "type": "string",
+            "description": "Field-level-permission restriction status: INACCESSIBLE (a referenced field the caller cannot view is used in filter/coloring/dates), HAS_RESTRICTED_CONTENT (some restricted columns/sorting/grouping were dropped), or null (no field restriction). Independent of isRestricted (workspace visibility). Read-only.",
+            "enum": [
+              "INACCESSIBLE",
+              "HAS_RESTRICTED_CONTENT"
+            ],
+            "readOnly": true
           }
         },
         "required": [
@@ -5205,12 +5747,12 @@
           },
           "startDateKey": {
             "type": "string",
-            "description": "Field ID of the start date field (required for timeline and calendar views)",
+            "description": "Field ID of the start date field (required for timeline and calendar views; must reference a date field on the record type)",
             "example": "F69b14f7e0e38f35f28c3ccee"
           },
           "endDateKey": {
             "type": "string",
-            "description": "Field ID of the end date field (for timeline and calendar views)",
+            "description": "Field ID of the end date field (required for timeline and calendar views; must reference a date field on the record type)",
             "example": "F69b14f7e0e38f35f28c3ccef"
           },
           "timelineScale": {
@@ -5264,115 +5806,6 @@
             "description": "Dynamic field metadata for global/dynamic record types"
           }
         }
-      },
-      "FilterCondition": {
-        "type": "string",
-        "description": "Supported filter conditions for record search",
-        "enum": [
-          "CONTAINS",
-          "DOES_NOT_CONTAIN",
-          "IS",
-          "IS_NOT",
-          "IS_EMPTY",
-          "IS_NOT_EMPTY",
-          "GREATER_THAN",
-          "GREATER_THAN_OR_EQUAL",
-          "LESS_THAN",
-          "LESS_THAN_OR_EQUAL",
-          "IS_AFTER",
-          "IS_BEFORE",
-          "IS_BETWEEN",
-          "IS_NOT_BETWEEN",
-          "IS_ANY_OF",
-          "IS_NONE_OF",
-          "HAS_ANY_OF",
-          "HAS_ALL_OF",
-          "HAS_NONE_OF",
-          "IS_EXACTLY"
-        ]
-      },
-      "FilterConditionDto": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/FilterNodeDto"
-          },
-          {
-            "type": "object",
-            "properties": {
-              "fieldId": {
-                "type": "string",
-                "description": "ID or alias of the field to filter on",
-                "example": "F693ab1c96f11ea3f4175e710",
-                "minLength": 1
-              },
-              "condition": {
-                "$ref": "#/components/schemas/FilterCondition",
-                "description": "Filter condition to apply"
-              },
-              "value": {
-                "description": "Value to compare against. Omit for unary conditions (IS_EMPTY, IS_NOT_EMPTY). Use an array for range conditions (IS_BETWEEN) or multi-value conditions (IS_ANY_OF). For People fields (USER, CREATED_BY, UPDATED_BY, APPROVED_BY), by default plain string values are interpreted as Adobe IMS user IDs when the customer is IMS-migrated; otherwise they are interpreted as Workfront user IDs. To explicitly set the ID type and avoid ambiguity, pass a typed object such as {\"id\":\"63e3b13000078c1795146248182d15dc\",\"idType\":\"WF\"} (use \"idType\":\"IMS\" for Adobe IMS IDs).",
-                "example": "Active"
-              },
-              "matchExternalId": {
-                "type": "boolean",
-                "description": "When true, values for REFERENCE fields are treated as external connection IDs and resolved to internal record IDs before the search executes. Only valid for external REFERENCE fields (isExternal=true)."
-              }
-            }
-          }
-        ],
-        "description": "A leaf filter condition applied to a single field",
-        "required": [
-          "condition",
-          "fieldId"
-        ]
-      },
-      "FilterGroupDto": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/FilterNodeDto"
-          },
-          {
-            "type": "object",
-            "properties": {
-              "operator": {
-                "$ref": "#/components/schemas/FilterOperator",
-                "description": "Logical operator to combine conditions"
-              },
-              "conditions": {
-                "type": "array",
-                "description": "List of filter nodes: leaf conditions or nested groups",
-                "items": {
-                  "$ref": "#/components/schemas/FilterNodeDto"
-                },
-                "minItems": 1
-              }
-            }
-          }
-        ],
-        "description": "A group of filter conditions combined with a logical operator (AND/OR). Supports recursive nesting for complex filter logic.",
-        "required": [
-          "conditions",
-          "operator"
-        ]
-      },
-      "FilterNodeDto": {
-        "description": "A node in the filter tree: either a leaf condition or a nested group",
-        "oneOf": [
-          {
-            "$ref": "#/components/schemas/FilterConditionDto"
-          },
-          {
-            "$ref": "#/components/schemas/FilterGroupDto"
-          }
-        ]
-      },
-      "FilterOperator": {
-        "type": "string",
-        "description": "Logical operator for combining filter conditions",
-        "enum": [
-          "AND",
-          "OR"
-        ]
       },
       "CoverImageDto": {
         "type": "object",
@@ -5432,9 +5865,7 @@
           },
           "data": {
             "type": "object",
-            "additionalProperties": {
-
-            },
+            "additionalProperties": {},
             "description": "Field data for the record as key-value pairs where keys are field IDs",
             "example": {
               "F693ab1c96f11ea3f4175e710": "Campaign Name",
@@ -5451,6 +5882,23 @@
             "$ref": "#/components/schemas/CoverImageDto",
             "description": "Cover image information for the record",
             "readOnly": true
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/RecordMetadataDto",
+            "description": "Additional metadata associated with the record"
+          }
+        }
+      },
+      "RecordMetadataDto": {
+        "type": "object",
+        "description": "Additional metadata associated with a record",
+        "properties": {
+          "catalyzeId": {
+            "type": "string",
+            "description": "External identifier linking this record to a Catalyze entity",
+            "example": "cat-12345",
+            "maxLength": 256,
+            "minLength": 0
           }
         }
       },
@@ -5495,9 +5943,7 @@
           },
           "data": {
             "type": "object",
-            "additionalProperties": {
-
-            },
+            "additionalProperties": {},
             "description": "Field data for the record as key-value pairs where keys are field IDs",
             "example": {
               "F693ab1c96f11ea3f4175e710": "Campaign Name",
@@ -5514,6 +5960,10 @@
             "$ref": "#/components/schemas/CoverImageDto",
             "description": "Cover image information for the record",
             "readOnly": true
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/RecordMetadataDto",
+            "description": "Additional metadata associated with the record"
           },
           "recordTypeAlias": {
             "type": "string",
@@ -5539,9 +5989,7 @@
           },
           "details": {
             "type": "object",
-            "additionalProperties": {
-
-            },
+            "additionalProperties": {},
             "description": "Optional structured context for this item failure."
           }
         }
@@ -5654,31 +6102,34 @@
           }
         }
       },
+      "AuthzObjectType": {
+        "type": "string",
+        "enum": [
+          "maestro/workspace",
+          "maestro/public_workspace",
+          "maestro/recordtype",
+          "maestro/record",
+          "redrock/user",
+          "redrock/group",
+          "redrock/cmpy",
+          "redrock/cust",
+          "redrock/teamob",
+          "redrock/role",
+          "ims/user",
+          "member",
+          "groupmember",
+          "maestro/view",
+          "maestro/dynamic_recordtype",
+          "maestro/field"
+        ]
+      },
       "AuthzSubjectDtoV2": {
         "type": "object",
         "description": "Authorization subject reference (user, group, team, etc.)",
         "properties": {
           "type": {
-            "type": "string",
+            "$ref": "#/components/schemas/AuthzObjectType",
             "description": "Type of the authorization subject",
-            "enum": [
-              "maestro/workspace",
-              "maestro/public_workspace",
-              "maestro/recordtype",
-              "maestro/record",
-              "redrock/user",
-              "redrock/group",
-              "redrock/cmpy",
-              "redrock/cust",
-              "redrock/teamob",
-              "redrock/role",
-              "ims/user",
-              "member",
-              "groupmember",
-              "maestro/view",
-              "maestro/dynamic_recordtype",
-              "maestro/field"
-            ],
             "example": "redrock/user"
           },
           "id": {
@@ -5687,6 +6138,14 @@
             "example": "U123abc"
           }
         }
+      },
+      "DefaultPermissionMode": {
+        "type": "string",
+        "enum": [
+          "OPEN",
+          "RESTRICTED",
+          "NO_ACCESS"
+        ]
       },
       "PermissionSubjectDto": {
         "type": "object",
@@ -5699,15 +6158,8 @@
             "minLength": 1
           },
           "type": {
-            "type": "string",
+            "$ref": "#/components/schemas/PermissionSubjectType",
             "description": "Type of the subject",
-            "enum": [
-              "USER",
-              "GROUP",
-              "TEAM",
-              "ROLE",
-              "COMPANY"
-            ],
             "example": "USER"
           },
           "displayName": {
@@ -5720,6 +6172,16 @@
         "required": [
           "id",
           "type"
+        ]
+      },
+      "PermissionSubjectType": {
+        "type": "string",
+        "enum": [
+          "USER",
+          "GROUP",
+          "TEAM",
+          "ROLE",
+          "COMPANY"
         ]
       },
       "RecordTypeDto": {
@@ -5869,8 +6331,8 @@
             "description": "External connection type",
             "enum": [
               "WORKFRONT",
-              "BRAND",
               "AEM",
+              "BRAND",
               "INTAKE"
             ],
             "example": "WORKFRONT"
@@ -5905,17 +6367,13 @@
         "description": "Default record-level permission rule for a record type",
         "properties": {
           "mode": {
-            "type": "string",
-            "description": "OPEN (all workspace contributors can edit new records) or RESTRICTED (only the creator + selected subjects can edit; inheritance of edit access disabled)",
-            "enum": [
-              "OPEN",
-              "RESTRICTED"
-            ],
+            "$ref": "#/components/schemas/DefaultPermissionMode",
+            "description": "OPEN (all workspace contributors can edit new records), RESTRICTED (only the creator + selected subjects can edit; inheritance of edit access disabled), or NO_ACCESS (only the creator + selected subjects can even view; inheritance of view and edit disabled - mirrors the per-record \"Only Selected People Can Have Access\" wildcard. Requires the wf-planning-record-level-permissions-no-access feature and only supports USER/GROUP/TEAM subjects)",
             "example": "RESTRICTED"
           },
           "subjects": {
             "type": "array",
-            "description": "Subjects with explicit edit access in RESTRICTED mode. Retained across mode toggles so a prior selection is restored when switching back to RESTRICTED.",
+            "description": "Subjects with explicit access in RESTRICTED/NO_ACCESS mode. Retained across mode toggles so a prior selection is restored when switching back. NO_ACCESS only supports USER/GROUP/TEAM subjects.",
             "items": {
               "$ref": "#/components/schemas/PermissionSubjectDto"
             }
@@ -5924,20 +6382,6 @@
         "required": [
           "mode"
         ]
-      },
-      "FieldAttachmentOptionsDto": {
-        "type": "object",
-        "description": "Attachment field options",
-        "properties": {
-          "showThumbnail": {
-            "type": "boolean",
-            "description": "Whether to display attachment thumbnails"
-          },
-          "showTitle": {
-            "type": "boolean",
-            "description": "Whether to display attachment titles"
-          }
-        }
       },
       "FieldDateOptions": {
         "type": "object",
@@ -5976,7 +6420,7 @@
         "properties": {
           "dateFormat": {
             "type": "string",
-            "description": "Date format",
+            "description": "Date format. Required on create/PUT for DATE fields.",
             "enum": [
               "locale",
               "standard",
@@ -5995,6 +6439,20 @@
               "h12",
               "h24"
             ]
+          }
+        }
+      },
+      "FieldDocumentOptionsDto": {
+        "type": "object",
+        "description": "Document field options. Required on create/PUT for DOCUMENT fields; not required on PATCH.",
+        "properties": {
+          "showThumbnail": {
+            "type": "boolean",
+            "description": "Whether to display document thumbnails"
+          },
+          "showTitle": {
+            "type": "boolean",
+            "description": "Whether to display document titles"
           }
         }
       },
@@ -6047,22 +6505,29 @@
           },
           "type": {
             "type": "string",
-            "description": "Type of the field. Subject to per-record-type quotas: max 20 PARAGRAPH (long text), max 20 FORMULA, max 30 REFERENCE.",
+            "description": "Type of the field. Subject to per-record-type quotas: max 20 long-text, max 20 formula, max 30 reference. lookup and document are not directly creatable.",
             "enum": [
-              "TEXT",
-              "PARAGRAPH",
-              "NUMBER",
-              "PERCENTAGE",
-              "CURRENCY",
-              "DATE",
-              "SINGLE_SELECT",
-              "MULTI_SELECT",
-              "CHECKBOX",
-              "REFERENCE",
-              "USER",
-              "FORMULA"
+              "text",
+              "long-text",
+              "number",
+              "percentage",
+              "currency",
+              "date",
+              "single-select",
+              "multi-select",
+              "boolean",
+              "reference",
+              "user",
+              "formula",
+              "created-by",
+              "created-at",
+              "updated-by",
+              "updated-at",
+              "approved-by",
+              "approved-at",
+              "record-id"
             ],
-            "example": "TEXT"
+            "example": "text"
           },
           "description": {
             "type": "string",
@@ -6077,7 +6542,7 @@
           },
           "options": {
             "type": "array",
-            "description": "Field options for single-select and multi-select fields",
+            "description": "Field options for single-select and multi-select fields. Required (non-empty) on create/PUT for those types; every option needs a non-blank displayName, and both displayName (case-insensitive) and non-null name values must be unique within the list.",
             "items": {
               "$ref": "#/components/schemas/FieldOptionDto"
             }
@@ -6091,11 +6556,11 @@
           },
           "dateOptions": {
             "$ref": "#/components/schemas/FieldDateOptionsDto",
-            "description": "Date field options"
+            "description": "Date field options. Required on create/PUT for date fields (dateOptions.dateFormat must be set); not required on PATCH."
           },
           "numberOptions": {
             "$ref": "#/components/schemas/FieldNumberOptionsDto",
-            "description": "Number field options for number, percentage, and currency fields"
+            "description": "Number field options for number, percentage, and currency fields. Required on create/PUT for number/percentage/currency fields (numberOptions.currency is additionally required for currency); not required on PATCH."
           },
           "referenceOptions": {
             "$ref": "#/components/schemas/FieldReferenceOptionsDto",
@@ -6111,7 +6576,7 @@
           },
           "userOptions": {
             "$ref": "#/components/schemas/FieldUserOptionsDto",
-            "description": "User field options"
+            "description": "User field options. Required on create/PUT for user fields (userOptions.multipleUsersAllowed must be set); not required on PATCH."
           },
           "defaultUsers": {
             "type": "array",
@@ -6120,9 +6585,9 @@
               "type": "string"
             }
           },
-          "attachmentOptions": {
-            "$ref": "#/components/schemas/FieldAttachmentOptionsDto",
-            "description": "Attachment field options"
+          "documentOptions": {
+            "$ref": "#/components/schemas/FieldDocumentOptionsDto",
+            "description": "Document field options. Document fields are not directly creatable; on PUT of an existing document field these options are required. Not required on PATCH."
           },
           "hasError": {
             "type": "boolean",
@@ -6131,6 +6596,11 @@
           "isHtmlNative": {
             "type": "boolean",
             "description": "Indicates if the long text field is HTML native"
+          },
+          "restricted": {
+            "type": "boolean",
+            "description": "Indicates whether the field is currently restricted to selected users only (field-sharing wildcard set to \"selected users\"). Read-only.",
+            "readOnly": true
           },
           "metadata": {
             "$ref": "#/components/schemas/FieldMetadataDto",
@@ -6218,16 +6688,21 @@
               "AFN",
               "ALL",
               "AMD",
+              "ANG",
+              "AOA",
               "AON",
               "ARS",
               "AUD",
+              "AWG",
               "AZN",
               "BAM",
               "BBD",
               "BDT",
               "BGL",
+              "BGN",
               "BHD",
               "BIF",
+              "BMD",
               "BND",
               "BOB",
               "BRL",
@@ -6235,6 +6710,7 @@
               "BTN",
               "BWP",
               "BYN",
+              "BYR",
               "BZD",
               "CAD",
               "CDF",
@@ -6243,8 +6719,10 @@
               "CNY",
               "COP",
               "CRC",
+              "CUC",
               "CUP",
               "CVE",
+              "CZK",
               "DJF",
               "DKK",
               "DOP",
@@ -6254,13 +6732,17 @@
               "ETB",
               "EUR",
               "FJD",
+              "FKP",
               "GBP",
               "GEL",
               "GHC",
+              "GHS",
+              "GIP",
               "GMD",
               "GNF",
               "GTQ",
               "GYD",
+              "HKD",
               "HNL",
               "HRK",
               "HTG",
@@ -6281,12 +6763,15 @@
               "KPW",
               "KRW",
               "KWD",
+              "KYD",
               "KZT",
               "LAK",
               "LBP",
               "LKR",
               "LRD",
               "LSL",
+              "LTL",
+              "LVL",
               "LYD",
               "MAD",
               "MDL",
@@ -6294,6 +6779,8 @@
               "MKD",
               "MMK",
               "MNT",
+              "MOP",
+              "MRO",
               "MRU",
               "MUR",
               "MVR",
@@ -6301,6 +6788,7 @@
               "MXN",
               "MYR",
               "MZM",
+              "MZN",
               "NAD",
               "NGN",
               "NIO",
@@ -6326,11 +6814,15 @@
               "SDG",
               "SEK",
               "SGD",
+              "SHP",
+              "SLE",
               "SLL",
               "SOS",
               "SRD",
               "SSP",
+              "STD",
               "STN",
+              "SVC",
               "SYP",
               "SZL",
               "THB",
@@ -6340,23 +6832,32 @@
               "TOP",
               "TRY",
               "TTD",
+              "TWD",
               "TZS",
               "UAH",
               "UGS",
+              "UGX",
               "USD",
               "UYU",
               "UZS",
               "VEF",
+              "VES",
               "VND",
               "VUV",
               "WST",
               "XAF",
               "XCD",
+              "XCG",
+              "XDR",
               "XOF",
+              "XPF",
               "YER",
               "ZAR",
               "ZMK",
-              "ZWD"
+              "ZMW",
+              "ZWD",
+              "ZWG",
+              "ZWL"
             ]
           },
           "visualizationType": {
@@ -6365,6 +6866,15 @@
               "TEXT",
               "PROGRESS_BAR",
               "PROGRESS_CIRCLE"
+            ]
+          },
+          "financeType": {
+            "type": "string",
+            "enum": [
+              "GENERAL",
+              "BILLING",
+              "COST",
+              "COMBINED"
             ]
           }
         }
@@ -6384,22 +6894,27 @@
           },
           "currency": {
             "type": "string",
-            "description": "Currency code (e.g. USD, EUR, GBP); only for currency fields",
+            "description": "Currency code (e.g. USD, EUR, GBP); only for currency fields. Required on create/PUT for CURRENCY fields.",
             "enum": [
               "AED",
               "AFN",
               "ALL",
               "AMD",
+              "ANG",
+              "AOA",
               "AON",
               "ARS",
               "AUD",
+              "AWG",
               "AZN",
               "BAM",
               "BBD",
               "BDT",
               "BGL",
+              "BGN",
               "BHD",
               "BIF",
+              "BMD",
               "BND",
               "BOB",
               "BRL",
@@ -6407,6 +6922,7 @@
               "BTN",
               "BWP",
               "BYN",
+              "BYR",
               "BZD",
               "CAD",
               "CDF",
@@ -6415,8 +6931,10 @@
               "CNY",
               "COP",
               "CRC",
+              "CUC",
               "CUP",
               "CVE",
+              "CZK",
               "DJF",
               "DKK",
               "DOP",
@@ -6426,13 +6944,17 @@
               "ETB",
               "EUR",
               "FJD",
+              "FKP",
               "GBP",
               "GEL",
               "GHC",
+              "GHS",
+              "GIP",
               "GMD",
               "GNF",
               "GTQ",
               "GYD",
+              "HKD",
               "HNL",
               "HRK",
               "HTG",
@@ -6453,12 +6975,15 @@
               "KPW",
               "KRW",
               "KWD",
+              "KYD",
               "KZT",
               "LAK",
               "LBP",
               "LKR",
               "LRD",
               "LSL",
+              "LTL",
+              "LVL",
               "LYD",
               "MAD",
               "MDL",
@@ -6466,6 +6991,8 @@
               "MKD",
               "MMK",
               "MNT",
+              "MOP",
+              "MRO",
               "MRU",
               "MUR",
               "MVR",
@@ -6473,6 +7000,7 @@
               "MXN",
               "MYR",
               "MZM",
+              "MZN",
               "NAD",
               "NGN",
               "NIO",
@@ -6498,11 +7026,15 @@
               "SDG",
               "SEK",
               "SGD",
+              "SHP",
+              "SLE",
               "SLL",
               "SOS",
               "SRD",
               "SSP",
+              "STD",
               "STN",
+              "SVC",
               "SYP",
               "SZL",
               "THB",
@@ -6512,23 +7044,32 @@
               "TOP",
               "TRY",
               "TTD",
+              "TWD",
               "TZS",
               "UAH",
               "UGS",
+              "UGX",
               "USD",
               "UYU",
               "UZS",
               "VEF",
+              "VES",
               "VND",
               "VUV",
               "WST",
               "XAF",
               "XCD",
+              "XCG",
+              "XDR",
               "XOF",
+              "XPF",
               "YER",
               "ZAR",
               "ZMK",
-              "ZWD"
+              "ZMW",
+              "ZWD",
+              "ZWG",
+              "ZWL"
             ]
           },
           "visualizationType": {
@@ -6539,6 +7080,16 @@
               "PROGRESS_BAR",
               "PROGRESS_CIRCLE"
             ]
+          },
+          "financeType": {
+            "type": "string",
+            "description": "Finance permission classification for currency fields: general, billing, cost, or combined (lower case only). combined requires general, billing, and cost view permission all at once, not just one. Absent/null means no access restriction. Only for currency fields; requires field-level permissions; not available for standalone (Planning-only) tenants.",
+            "enum": [
+              "GENERAL",
+              "BILLING",
+              "COST",
+              "COMBINED"
+            ]
           }
         }
       },
@@ -6547,11 +7098,11 @@
         "description": "Field option for single-select and multi-select fields",
         "properties": {
           "name": {
-            "description": "Name identifier for the option"
+            "description": "Name identifier for the option. When provided, must be unique among the field's other options."
           },
           "displayName": {
             "type": "string",
-            "description": "Display name for the option"
+            "description": "Display name for the option. Required (non-blank) on create/PUT, and must be unique (case-insensitive) among the field's other options."
           },
           "color": {
             "type": "string",
@@ -6640,10 +7191,13 @@
           },
           "filters": {
             "type": "object",
-            "additionalProperties": {
-
-            },
+            "additionalProperties": {},
             "description": "Filters for the reference field"
+          },
+          "connectionFilters": {
+            "type": "array",
+            "description": "Connection filters restricting which target records are selectable for the reference field",
+            "items": {}
           },
           "lookupFields": {
             "type": "array",
@@ -6662,6 +7216,10 @@
           "globalRecordTypeWorkspaceFieldId": {
             "type": "string",
             "description": "Global record type workspace field ID"
+          },
+          "isControlled": {
+            "type": "boolean",
+            "description": "Whether the referenced record type is controlled by this reference (drives cascading connections)"
           }
         }
       },
@@ -6671,7 +7229,7 @@
         "properties": {
           "multipleUsersAllowed": {
             "type": "boolean",
-            "description": "Whether multiple users can be selected"
+            "description": "Whether multiple users can be selected. Required on create/PUT for USER fields."
           }
         }
       },
@@ -6817,22 +7375,13 @@
       "PageRecordDto": {
         "type": "object",
         "properties": {
-          "totalElements": {
-            "type": "integer",
-            "format": "int64"
-          },
           "totalPages": {
             "type": "integer",
             "format": "int32"
           },
-          "pageable": {
-            "$ref": "#/components/schemas/PageableObject"
-          },
-          "first": {
-            "type": "boolean"
-          },
-          "last": {
-            "type": "boolean"
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
           },
           "size": {
             "type": "integer",
@@ -6851,9 +7400,18 @@
           "sort": {
             "$ref": "#/components/schemas/SortObject"
           },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
+          },
           "numberOfElements": {
             "type": "integer",
             "format": "int32"
+          },
+          "first": {
+            "type": "boolean"
+          },
+          "last": {
+            "type": "boolean"
           },
           "empty": {
             "type": "boolean"
@@ -7084,11 +7642,11 @@
           },
           "inheritViewOnly": {
             "type": "boolean",
-            "description": "Set inheritance for a record-type (true=inherited, false=view-only). Only valid for record-types."
+            "description": "Inheritance mode: true = downgrade inherited access to view-only, false = fully inherited. Valid for record-types, records, and fields; ignored when a record's/field's wildcard is SELECTED_USERS_ONLY (that state isn't inheriting)."
           },
           "wildcard": {
             "type": "string",
-            "description": "Set wildcard access mode for a record. Only valid for records.",
+            "description": "Set wildcard access mode. Valid for records and fields (not record-types); defaults to EVERYONE_IN_WORKSPACE if never set. SELECTED_USERS_ONLY additionally requires the record-level no-access feature.",
             "enum": [
               "SELECTED_USERS_ONLY",
               "EVERYONE_IN_WORKSPACE"
@@ -7109,7 +7667,10 @@
             "type": "boolean",
             "description": "Whether more items exist beyond this page"
           }
-        }
+        },
+        "required": [
+          "hasMore"
+        ]
       },
       "CursorResponseWorkspaceDto": {
         "type": "object",
@@ -7142,6 +7703,20 @@
           "cursor": {
             "$ref": "#/components/schemas/CursorInfo",
             "description": "Cursor metadata for fetching subsequent pages"
+          }
+        }
+      },
+      "ViewRestrictionDto": {
+        "type": "object",
+        "properties": {
+          "restrictionStatus": {
+            "type": "string",
+            "description": "Field-level-permission restriction status: INACCESSIBLE (a referenced field the caller cannot view is used), HAS_RESTRICTED_CONTENT (restricted columns/sorting/grouping were dropped), or null (no field restriction).",
+            "enum": [
+              "INACCESSIBLE",
+              "HAS_RESTRICTED_CONTENT"
+            ],
+            "readOnly": true
           }
         }
       },
@@ -7272,6 +7847,7 @@
           }
         }
       },
+      "StreamingResponseBody": {},
       "CursorResponseFieldDto": {
         "type": "object",
         "description": "Cursor-paginated list of fields",
@@ -7385,13 +7961,27 @@
           }
         }
       },
-      "InheritanceDto": {
+      "MemberResponse": {
         "type": "object",
-        "description": "Workspace-member inheritance setting for a record type",
+        "description": "Members and sharing settings for a resource",
         "properties": {
-          "inherited": {
+          "members": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MemberPermissionDto"
+            }
+          },
+          "wildcard": {
+            "type": "string",
+            "description": "Wildcard access mode for the resource's members. Only set for records (null for workspaces, record-types, and views). Defaults to EVERYONE_IN_WORKSPACE; SELECTED_USERS_ONLY is only reachable for records.",
+            "enum": [
+              "SELECTED_USERS_ONLY",
+              "EVERYONE_IN_WORKSPACE"
+            ]
+          },
+          "inheritViewOnly": {
             "type": "boolean",
-            "description": "When true, workspace members inherit their workspace-level access on this record type. When false, workspace members are restricted to view-only."
+            "description": "Whether the resource's inherited access is downgraded to view-only (true) or fully inherited (false). Set for record-types, records, and fields; null for workspaces and views, and null for a record/field that is not inheriting at all (wildcard SELECTED_USERS_ONLY)."
           }
         }
       },

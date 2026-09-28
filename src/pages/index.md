@@ -138,9 +138,17 @@ Retrieve a cursor‑paginated list of field change events for a specific record.
 GET /v2/records/{id}/history
 ```
 
+#### Export records
+
+Stream every record you can view for a record type as a CSV or Excel (`.xlsx`) file. Columns and their order come from a given view, or a list of field IDs/aliases, or default to all fields — so the export can match an on-screen table exactly.
+
+```
+GET /v2/record-types/{recordTypeId}/records/export
+```
+
 #### Permissions API
 
-V2 introduces a dedicated Permissions API for reading and managing access programmatically, including workspace and record type member management, access request workflows, and permission inheritance, using the below endpoints:
+V2 introduces a dedicated Permissions API for reading and managing access programmatically, including workspace, record type, record, view, and field member management, access request workflows, and permission inheritance, using the below endpoints:
 
 ```
 GET    /v2/permissions/{resourceType}/{resourceId}
@@ -148,11 +156,11 @@ GET    /v2/permissions/{resourceType}/{resourceId}/members
 GET    /v2/permissions/{resourceType}/{resourceId}/inheritance
 GET    /v2/permissions/{resourceType}/{resourceId}/requests
 DELETE /v2/permissions/{resourceType}/{resourceId}/requests
-PATCH  /v2/permissions/{resourceType}/{resourceId}/members
+PATCH  /v2/permissions/{resourceType}/{resourceId}/members/bulk
 POST   /v2/permissions/{resourceType}/{resourceId}/requests
 ```
 
-In these endpoints `resourceType` represents the entity type, and `resourceId` represents the specific entity for which the permissions are being checked. The `resourceType` can take one of the following values: `workspaces`, `record-types`, `records`, `views`.
+In these endpoints `resourceType` represents the entity type, and `resourceId` represents the specific entity for which the permissions are being checked. The `resourceType` can take one of the following values: `workspaces`, `record-types`, `records`, `views`, `fields`. Field-level sharing requires a `recordTypeId` query parameter and supports only the `viewer`/`contributor` roles (not `manager`).
 
 For example, the endpoint below will return the list of people who have access to the workspace with ID `Ws6a0475de4ecced960185e1e1`:
 

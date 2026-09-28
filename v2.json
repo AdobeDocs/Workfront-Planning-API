@@ -22,7 +22,7 @@
     },
     {
       "name": "Records",
-      "description": "Record management. Limits: max 25,000 records per record type; max 100 records per bulk operation; max 500 connections per reference field; max 10 connections per hierarchy field."
+      "description": "Record management. Limits: max 25,000 records per record type; max 100 records per bulk operation; max 1,000,000 total references per bulk create/update request (default; configurable; returns 400 BULK_REFERENCE_COUNT_EXCEEDED); max 500 connections per reference field; max 10 connections per hierarchy field."
     },
     {
       "name": "Fields",
@@ -38,7 +38,7 @@
     },
     {
       "name": "Limits and Quotas",
-      "description": "Public API V2 limits and quotas:\n\n- Workspaces per tenant: 100,000\n- Record types per workspace: 100\n- Records per record type: 25,000\n- Records per bulk request: 100\n- Fields per record type: 500\n- long-text fields per record type: 20\n- formula fields per record type: 20\n- reference fields per record type: 30\n- Connections per reference field: 500\n- Connections per hierarchy field: 10\n- Personal views per record type: 100\n- Lookup depth: 5\n- Hierarchy depth: 4\n- Hierarchy count per workspace: 5\n- Formula expression length: 50,000 characters\n- Display name length: 256 characters\n\nExceeding any of these limits returns an HTTP 403 with a specific `errorCode` (e.g. `RECORD_TYPE_LIMIT_EXCEEDED`, `FIELD_LIMIT_EXCEEDED`, `VIEW_LIMIT_EXCEEDED`)."
+      "description": "Public API V2 limits and quotas:\n\n- Workspaces per tenant: 100,000\n- Record types per workspace: 100\n- Records per record type: 25,000\n- Records per bulk request: 100\n- Total references per bulk create/update request: 1,000,000 (default; configurable)\n- Fields per record type: 500\n- long-text fields per record type: 20\n- formula fields per record type: 20\n- reference fields per record type: 30\n- Connections per reference field: 500\n- Connections per hierarchy field: 10\n- Personal views per record type: 100\n- Lookup depth: 5\n- Hierarchy depth: 4\n- Hierarchy count per workspace: 5\n- Formula expression length: 50,000 characters\n- Display name length: 256 characters\n\nExceeding most of these limits returns an HTTP 403 with a specific `errorCode` (e.g. `RECORD_TYPE_LIMIT_EXCEEDED`, `FIELD_LIMIT_EXCEEDED`, `VIEW_LIMIT_EXCEEDED`). The bulk request reference-count limit is the exception: it returns HTTP 400 with `errorCode` `BULK_REFERENCE_COUNT_EXCEEDED`."
     }
   ],
   "paths": {

@@ -1241,6 +1241,15 @@
               "type": "boolean",
               "default": false
             }
+          },
+          {
+            "name": "scopeWorkspaceId",
+            "in": "query",
+            "description": "ID of the workspace to scope global record type access and record creation",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "requestBody": {
@@ -3178,6 +3187,15 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "scopeWorkspaceId",
+            "in": "query",
+            "description": "ID of the workspace to scope global record type access and record creation",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "requestBody": {
@@ -4504,6 +4522,15 @@
               "maximum": 50,
               "minimum": 1
             }
+          },
+          {
+            "name": "scopeWorkspaceId",
+            "in": "query",
+            "description": "Workspace context for dynamic record types",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -5435,7 +5462,7 @@
                 "description": "Filter condition to apply"
               },
               "value": {
-                "description": "Value to compare against. Omit for unary conditions (IS_EMPTY, IS_NOT_EMPTY). Use an array for range conditions (IS_BETWEEN) or multi-value conditions (IS_ANY_OF). For People fields (USER, CREATED_BY, UPDATED_BY, APPROVED_BY), by default plain string values are interpreted as Adobe IMS user IDs when the customer is IMS-migrated; otherwise they are interpreted as Workfront user IDs. To explicitly set the ID type and avoid ambiguity, pass a typed object such as {\"id\":\"63e3b13000078c1795146248182d15dc\",\"idType\":\"WF\"} (use \"idType\":\"IMS\" for Adobe IMS IDs).",
+                "description": "Value to compare against. Omit for unary conditions (IS_EMPTY, IS_NOT_EMPTY). Use an array for range conditions (IS_BETWEEN) or multi-value conditions (IS_ANY_OF). For People fields (USER, CREATED_BY, UPDATED_BY), by default plain string values are interpreted as Adobe IMS user IDs when the customer is IMS-migrated; otherwise they are interpreted as Workfront user IDs. To explicitly set the ID type and avoid ambiguity, pass a typed object such as {\"id\":\"63e3b13000078c1795146248182d15dc\",\"idType\":\"WF\"} (use \"idType\":\"IMS\" for Adobe IMS IDs).",
                 "example": "Active"
               },
               "matchExternalId": {
@@ -6147,6 +6174,33 @@
           "NO_ACCESS"
         ]
       },
+      "DefaultRecordPermissionsDto": {
+        "type": "object",
+        "description": "Record-sharing-aligned default permission rule for a record type (wildcard + inheritance + per-subject role). Requires the wf-planning-default-permission-enhancements feature.",
+        "properties": {
+          "wildcard": {
+            "type": "string",
+            "description": "EVERYONE_IN_WORKSPACE (inherited access allowed) or SELECTED_USERS_ONLY (no inherited access — only the creator + selected subjects). EVERYONE_IN_WORKSPACE supports all subject types (USER/GROUP/TEAM/ROLE/COMPANY) for per-subject overrides. SELECTED_USERS_ONLY requires the wf-planning-record-level-permissions-no-access feature and only supports USER/GROUP/TEAM subjects.",
+            "enum": [
+              "SELECTED_USERS_ONLY",
+              "EVERYONE_IN_WORKSPACE"
+            ],
+            "example": "EVERYONE_IN_WORKSPACE"
+          },
+          "inheritViewOnly": {
+            "type": "boolean",
+            "description": "Inheritance mode (matches record sharing): true = inherited access is downgraded to view-only, false = fully inherited. Ignored when wildcard is SELECTED_USERS_ONLY.",
+            "example": true
+          },
+          "subjects": {
+            "type": "array",
+            "description": "Subjects with an explicit per-subject role on new records.",
+            "items": {
+              "$ref": "#/components/schemas/SharingSubjectDto"
+            }
+          }
+        }
+      },
       "PermissionSubjectDto": {
         "type": "object",
         "description": "A subject (user/group/team/role/company) granted explicit edit access in a RESTRICTED rule",
@@ -6268,6 +6322,10 @@
             "$ref": "#/components/schemas/RecordTypePermissionSettingsDto",
             "description": "Default record-level permission rule for this record type. On read, the resolved rule for the current workspace context (defaulted to OPEN when never configured); omitted when the default-record-permissions feature is disabled. On PATCH/PUT, set this to configure the rule — for global record types it applies to the workspace given by the scopeWorkspaceId query param (defaulting to the primary workspace)."
           },
+          "defaultRecordPermissions": {
+            "$ref": "#/components/schemas/DefaultRecordPermissionsDto",
+            "description": "Record-sharing-aligned default permission rule (wildcard + inheritance + per-subject role). On read, the resolved rule for the current workspace context; omitted when the wf-planning-default-permission-enhancements feature is disabled. On PATCH/PUT, set this to configure the rule — for global record types it applies to the workspace given by the scopeWorkspaceId query param (defaulting to the primary workspace). Supersedes permissionSettings, which is rejected on write while enhancements are enabled."
+          },
           "externalOptions": {
             "$ref": "#/components/schemas/RecordTypeExternalOptionsDto",
             "description": "External options for external record types"
@@ -6381,6 +6439,44 @@
         },
         "required": [
           "mode"
+        ]
+      },
+      "SharingSubjectDto": {
+        "type": "object",
+        "description": "A subject (user/group/team/role/company) with a per-subject role in a default record permissions rule",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Identifier of the subject",
+            "example": "642f1c0a0e38f35f28c3ccee",
+            "minLength": 1
+          },
+          "type": {
+            "$ref": "#/components/schemas/PermissionSubjectType",
+            "description": "Type of the subject",
+            "example": "USER"
+          },
+          "role": {
+            "type": "string",
+            "description": "Role granted to the subject on new records. Records support only VIEWER (\"View record\") or EDITOR (\"Manage record\") — MANAGER is rejected.",
+            "enum": [
+              "viewer",
+              "editor",
+              "manager"
+            ],
+            "example": "EDITOR"
+          },
+          "displayName": {
+            "type": "string",
+            "description": "Display name of the subject, resolved from Redrock at read time",
+            "example": "Jane Doe",
+            "readOnly": true
+          }
+        },
+        "required": [
+          "id",
+          "role",
+          "type"
         ]
       },
       "FieldDateOptions": {
@@ -6523,8 +6619,6 @@
               "created-at",
               "updated-by",
               "updated-at",
-              "approved-by",
-              "approved-at",
               "record-id"
             ],
             "example": "text"
@@ -7199,6 +7293,13 @@
             "description": "Connection filters restricting which target records are selectable for the reference field",
             "items": {}
           },
+          "workfrontFilterIds": {
+            "type": "array",
+            "description": "IDs of the Workfront saved filters attached to this Workfront object connection field. The picker offers only objects matching every attached filter. Omit or send null to leave the stored list unchanged; send an empty array to remove all attached filters.",
+            "items": {
+              "type": "string"
+            }
+          },
           "lookupFields": {
             "type": "array",
             "description": "Lookup fields for the reference",
@@ -7316,6 +7417,10 @@
           "permissionSettings": {
             "$ref": "#/components/schemas/RecordTypePermissionSettingsDto",
             "description": "Default record-level permission rule for this record type. On read, the resolved rule for the current workspace context (defaulted to OPEN when never configured); omitted when the default-record-permissions feature is disabled. On PATCH/PUT, set this to configure the rule — for global record types it applies to the workspace given by the scopeWorkspaceId query param (defaulting to the primary workspace)."
+          },
+          "defaultRecordPermissions": {
+            "$ref": "#/components/schemas/DefaultRecordPermissionsDto",
+            "description": "Record-sharing-aligned default permission rule (wildcard + inheritance + per-subject role). On read, the resolved rule for the current workspace context; omitted when the wf-planning-default-permission-enhancements feature is disabled. On PATCH/PUT, set this to configure the rule — for global record types it applies to the workspace given by the scopeWorkspaceId query param (defaulting to the primary workspace). Supersedes permissionSettings, which is rejected on write while enhancements are enabled."
           }
         },
         "required": [

@@ -180,6 +180,7 @@ V2 surfaces and enforces explicit platform limits. Plan integrations accordingly
 | `FORMULA` fields per record type           | 20      |
 | `REFERENCE` fields per record type         | 30      |
 | Personal views per record type             | 100     |
+| Conditions per view filter (incl. nested)  | 20      |
 | Workspaces per tenant                      | 100,000 |
 
 ### V1 vs V2 — what changed
@@ -324,6 +325,14 @@ POST /v2/record-types/Rt123/records/search?page=0&size=50
   }
 }
 ```
+
+View filters (`filter` on `POST /v2/record-types/{recordTypeId}/views`, `PUT` and `PATCH /v2/views/{id}`) use the same typed format, with these rules:
+
+- At most 20 conditions in total, counting conditions inside nested groups, and at most one level of nested groups.
+- Every `fieldId` (ID or alias) must exist on the view's record type, and the condition must be supported by the field type. The same applies to `fieldId` in `sorting` and `grouping`.
+- `value` must be an array for `IS_BETWEEN`, `IS_NOT_BETWEEN`, `IS_ANY_OF`, `IS_NONE_OF`, `IS_EXACTLY` and `HAS_*` conditions, must be omitted for `IS_EMPTY` and `IS_NOT_EMPTY`, and is required for every other condition.
+
+A request that breaks a rule is rejected with `400` and `errorCode` `INVALID_DATA`, and the view is not saved. `GET` returns view filters in the same typed format (a single top-level group, field IDs instead of aliases), including filters of views created in the Workfront Planning UI.
 
 #### 7. Update error handling
 

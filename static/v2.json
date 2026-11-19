@@ -498,6 +498,53 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/V2ProblemDetail"
+                },
+                "examples": {
+                  "unknownField": {
+                    "summary": "Filter, sorting or grouping uses a field that is not on the record type",
+                    "value": {
+                      "title": "Invalid Data",
+                      "status": 400,
+                      "detail": "Invalid filtering field: F693ab1c96f11ea3f4175e799",
+                      "errorCode": "INVALID_DATA"
+                    }
+                  },
+                  "tooManyConditions": {
+                    "summary": "Filter has more than 20 conditions, including nested groups",
+                    "value": {
+                      "title": "Invalid Data",
+                      "status": 400,
+                      "detail": "Exceeds maximum filter levels allowed. Maximum allowed: 20",
+                      "errorCode": "INVALID_DATA"
+                    }
+                  },
+                  "arrayValueRequired": {
+                    "summary": "Condition needs an array value",
+                    "value": {
+                      "title": "Invalid Data",
+                      "status": 400,
+                      "detail": "The value for condition '$isBetween' must be a non-empty array. Provided value: 2026-01-01T00:00:00.000Z",
+                      "errorCode": "INVALID_DATA"
+                    }
+                  },
+                  "unexpectedValue": {
+                    "summary": "IS_EMPTY or IS_NOT_EMPTY sent with a value",
+                    "value": {
+                      "title": "Invalid Data",
+                      "status": 400,
+                      "detail": "Invalid view filter: condition IS_EMPTY on field F693ab1c96f11ea3f4175e711 does not take a value",
+                      "errorCode": "INVALID_DATA"
+                    }
+                  },
+                  "nestingTooDeep": {
+                    "summary": "Filter groups nested more than one level",
+                    "value": {
+                      "title": "Invalid Data",
+                      "status": 400,
+                      "detail": "Invalid view filter: view filters support one level of nested groups. Use a root group whose conditions are field conditions or groups of field conditions",
+                      "errorCode": "INVALID_DATA"
+                    }
+                  }
                 }
               }
             }
@@ -663,6 +710,53 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/V2ProblemDetail"
+                },
+                "examples": {
+                  "unknownField": {
+                    "summary": "Filter, sorting or grouping uses a field that is not on the record type",
+                    "value": {
+                      "title": "Invalid Data",
+                      "status": 400,
+                      "detail": "Invalid filtering field: F693ab1c96f11ea3f4175e799",
+                      "errorCode": "INVALID_DATA"
+                    }
+                  },
+                  "tooManyConditions": {
+                    "summary": "Filter has more than 20 conditions, including nested groups",
+                    "value": {
+                      "title": "Invalid Data",
+                      "status": 400,
+                      "detail": "Exceeds maximum filter levels allowed. Maximum allowed: 20",
+                      "errorCode": "INVALID_DATA"
+                    }
+                  },
+                  "arrayValueRequired": {
+                    "summary": "Condition needs an array value",
+                    "value": {
+                      "title": "Invalid Data",
+                      "status": 400,
+                      "detail": "The value for condition '$isBetween' must be a non-empty array. Provided value: 2026-01-01T00:00:00.000Z",
+                      "errorCode": "INVALID_DATA"
+                    }
+                  },
+                  "unexpectedValue": {
+                    "summary": "IS_EMPTY or IS_NOT_EMPTY sent with a value",
+                    "value": {
+                      "title": "Invalid Data",
+                      "status": 400,
+                      "detail": "Invalid view filter: condition IS_EMPTY on field F693ab1c96f11ea3f4175e711 does not take a value",
+                      "errorCode": "INVALID_DATA"
+                    }
+                  },
+                  "nestingTooDeep": {
+                    "summary": "Filter groups nested more than one level",
+                    "value": {
+                      "title": "Invalid Data",
+                      "status": 400,
+                      "detail": "Invalid view filter: view filters support one level of nested groups. Use a root group whose conditions are field conditions or groups of field conditions",
+                      "errorCode": "INVALID_DATA"
+                    }
+                  }
                 }
               }
             }
@@ -3005,6 +3099,53 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/V2ProblemDetail"
+                },
+                "examples": {
+                  "unknownField": {
+                    "summary": "Filter, sorting or grouping uses a field that is not on the record type",
+                    "value": {
+                      "title": "Invalid Data",
+                      "status": 400,
+                      "detail": "Invalid filtering field: F693ab1c96f11ea3f4175e799",
+                      "errorCode": "INVALID_DATA"
+                    }
+                  },
+                  "tooManyConditions": {
+                    "summary": "Filter has more than 20 conditions, including nested groups",
+                    "value": {
+                      "title": "Invalid Data",
+                      "status": 400,
+                      "detail": "Exceeds maximum filter levels allowed. Maximum allowed: 20",
+                      "errorCode": "INVALID_DATA"
+                    }
+                  },
+                  "arrayValueRequired": {
+                    "summary": "Condition needs an array value",
+                    "value": {
+                      "title": "Invalid Data",
+                      "status": 400,
+                      "detail": "The value for condition '$isBetween' must be a non-empty array. Provided value: 2026-01-01T00:00:00.000Z",
+                      "errorCode": "INVALID_DATA"
+                    }
+                  },
+                  "unexpectedValue": {
+                    "summary": "IS_EMPTY or IS_NOT_EMPTY sent with a value",
+                    "value": {
+                      "title": "Invalid Data",
+                      "status": 400,
+                      "detail": "Invalid view filter: condition IS_EMPTY on field F693ab1c96f11ea3f4175e711 does not take a value",
+                      "errorCode": "INVALID_DATA"
+                    }
+                  },
+                  "nestingTooDeep": {
+                    "summary": "Filter groups nested more than one level",
+                    "value": {
+                      "title": "Invalid Data",
+                      "status": 400,
+                      "detail": "Invalid view filter: view filters support one level of nested groups. Use a root group whose conditions are field conditions or groups of field conditions",
+                      "errorCode": "INVALID_DATA"
+                    }
+                  }
                 }
               }
             }
@@ -5676,22 +5817,50 @@
           },
           "filter": {
             "type": "array",
-            "description": "Filter conditions applied to records in this view",
-            "example": [],
+            "description": "Filter conditions applied to records in this view, as a list of filter nodes (leaf conditions or groups). Top-level nodes are combined with AND. Validation rules (a request that breaks them is rejected with 400 INVALID_DATA and the view is not saved): at most 20 conditions in total, counting conditions inside nested groups; at most one level of nested groups (a top-level group may contain groups, but those groups may only contain conditions); every fieldId must be the ID or alias of a field on the view's record type; the condition must be supported by the field type; value must be an array for IS_BETWEEN, IS_NOT_BETWEEN, IS_ANY_OF, IS_NONE_OF, IS_EXACTLY, HAS_ANY_OF, HAS_ALL_OF and HAS_NONE_OF, must be omitted for IS_EMPTY and IS_NOT_EMPTY, and is required for every other condition; date values use the format yyyy-MM-dd'T'HH:mm:ss.SSS'Z'. Typed user objects ({\"id\":...,\"idType\":...}) are not supported in view filters; use plain user ID strings. Responses return the filter in the same format: a single top-level group, with field IDs instead of aliases.",
+            "example": [
+              {
+                "operator": "AND",
+                "conditions": [
+                  {
+                    "fieldId": "F693ab1c96f11ea3f4175e710",
+                    "condition": "IS_ANY_OF",
+                    "value": [
+                      "Active",
+                      "On hold"
+                    ]
+                  },
+                  {
+                    "operator": "OR",
+                    "conditions": [
+                      {
+                        "fieldId": "F693ab1c96f11ea3f4175e711",
+                        "condition": "IS_EMPTY"
+                      },
+                      {
+                        "fieldId": "F693ab1c96f11ea3f4175e711",
+                        "condition": "IS_AFTER",
+                        "value": "2026-01-01T00:00:00.000Z"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
             "items": {
               "$ref": "#/components/schemas/FilterNodeDto"
             }
           },
           "grouping": {
             "type": "array",
-            "description": "Grouping configuration for records in this view",
+            "description": "Grouping configuration for records in this view. Every fieldId must exist on the view's record type; otherwise the request is rejected with 400 INVALID_DATA.",
             "items": {
               "$ref": "#/components/schemas/GroupDto"
             }
           },
           "sorting": {
             "type": "array",
-            "description": "Sorting configuration for records in this view",
+            "description": "Sorting configuration for records in this view. Every fieldId must exist on the view's record type; otherwise the request is rejected with 400 INVALID_DATA.",
             "items": {
               "$ref": "#/components/schemas/SortDto"
             }
